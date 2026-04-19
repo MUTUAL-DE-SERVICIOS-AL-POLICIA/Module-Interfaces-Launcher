@@ -3,21 +3,21 @@ services:
   beneficiary-interface:
     build: ./Beneficiary-Interface
     ports:
-      - ${NEXT_PUBLIC_SERVER_PORT_FRONTEND}:${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - ${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT}:${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT}
     volumes:
       - ./Beneficiary-Interface:/app
       - /app/node_modules
       - /app/.next
-    command: yarn dev -p ${NEXT_PUBLIC_SERVER_PORT_FRONTEND} --hostname 0.0.0.0
+    command: yarn dev -p ${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT} --hostname 0.0.0.0
     restart: always
 
   login-hub-interface:
     build: ./Login-Hub-Interface
     ports:
-      - ${LOGIN_FRONTEND_PORT}:${LOGIN_FRONTEND_PORT}
+      - ${NEXT_PUBLIC_HUB_FRONTEND_PORT}:${NEXT_PUBLIC_HUB_FRONTEND_PORT}
     volumes:
       - ./Login-Hub-Interface:/app
       - /app/node_modules
       - /app/.next
-    command: yarn dev -p ${LOGIN_FRONTEND_PORT} --hostname 0.0.0.0
+    command: yarn dev -p ${NEXT_PUBLIC_HUB_FRONTEND_PORT} --hostname 0.0.0.0
     restart: always
