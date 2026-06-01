@@ -5,10 +5,10 @@ services:
       context: ./Beneficiary-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${NEXT_PUBLIC_SERVER_PORT_FRONTEND}:${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - ${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT}:${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT}
     environment:
       - NODE_ENV=production
-      - PORT=${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - PORT=${NEXT_PUBLIC_BENEFICIARY_FRONTEND_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
 
@@ -17,9 +17,9 @@ services:
       context: ./Login-Hub-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${LOGIN_FRONTEND_PORT}:${LOGIN_FRONTEND_PORT}
+      - ${NEXT_PUBLIC_HUB_FRONTEND_PORT}:${NEXT_PUBLIC_HUB_FRONTEND_PORT}
     environment:
       - NODE_ENV=production
-      - PORT=${LOGIN_FRONTEND_PORT}
+      - PORT=${NEXT_PUBLIC_HUB_FRONTEND_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
