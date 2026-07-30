@@ -5,10 +5,10 @@ services:
       context: ./Beneficiary-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${NEXT_PUBLIC_SERVER_PORT_FRONTEND}:${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - ${BENEFICIARY_PORT}:${BENEFICIARY_PORT}
     environment:
       - NODE_ENV=production
-      - PORT=${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - PORT=${BENEFICIARY_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
 
@@ -17,9 +17,21 @@ services:
       context: ./Login-Hub-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${LOGIN_FRONTEND_PORT}:${LOGIN_FRONTEND_PORT}
+      - ${LOGIN_HUB_PORT}:${LOGIN_HUB_PORT}
     environment:
       - NODE_ENV=production
-      - PORT=${LOGIN_FRONTEND_PORT}
+      - PORT=${LOGIN_HUB_PORT}
+      - HOSTNAME=0.0.0.0
+    restart: always
+
+  sales-interface:
+    build: 
+      context: ./Sales-Interface
+      dockerfile: dockerfile.prod
+    ports:
+      - ${SALES_PORT}:${SALES_PORT}
+    environment:
+      - NODE_ENV=production
+      - PORT=${SALES_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
