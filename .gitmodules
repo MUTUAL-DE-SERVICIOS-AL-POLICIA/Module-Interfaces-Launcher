@@ -8,3 +8,6 @@
 [submodule "Sales-Interface"]
 	path = Sales-Interface
 	url = https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Sales-Interface.git
+[submodule "Collections-Interface"]
+	path = Collections-Interface
+	url = https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Collections-Interface.git
