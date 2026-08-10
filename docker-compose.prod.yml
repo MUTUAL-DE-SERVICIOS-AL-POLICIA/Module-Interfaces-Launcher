@@ -35,3 +35,15 @@ services:
       - PORT=${SALES_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
+
+  collections-interface:
+    build: 
+      context: ./Collections-Interface
+      dockerfile: dockerfile.prod
+    ports:
+      - ${COLLECTIONS_PORT}:${COLLECTIONS_PORT}
+    environment:
+      - NODE_ENV=production
+      - PORT=${COLLECTIONS_PORT}
+      - HOSTNAME=0.0.0.0
+    restart: always

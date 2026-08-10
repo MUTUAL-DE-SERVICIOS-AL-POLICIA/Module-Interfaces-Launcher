@@ -32,3 +32,14 @@ services:
       - /app/.next
     command: yarn dev -p ${SALES_PORT} --hostname 0.0.0.0
     restart: always
+
+  collections-interface:
+    build: ./Collections-Interface
+    ports:
+      - ${COLLECTIONS_PORT}:${COLLECTIONS_PORT}
+    volumes:
+      - ./Collections-Interface:/app
+      - /app/node_modules
+      - /app/.next
+    command: yarn dev -p ${COLLECTIONS_PORT} --hostname 0.0.0.0
+    restart: always
