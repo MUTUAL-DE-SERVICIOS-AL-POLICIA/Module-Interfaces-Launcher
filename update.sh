@@ -24,7 +24,7 @@ print_line() {
 }
 
 # ============================================================
-# DETECTAR PROYECTOS
+# DETECTAR PROYECTOS GIT
 # ============================================================
 
 PROJECTS=()
@@ -36,13 +36,10 @@ echo
 
 for directory in "$ROOT_DIR"/*; do
 
-    # Solo directorios
     [ -d "$directory" ] || continue
 
-    # No considerar el propio script u otros archivos
     PROJECT_NAME="$(basename "$directory")"
 
-    # Preguntar directamente a Git si es un repositorio
     if git -C "$directory" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 
         PROJECTS+=("$directory")
@@ -62,24 +59,48 @@ echo
 if [ ${#PROJECTS[@]} -eq 0 ]; then
 
     echo -e "${RED}No se encontraron proyectos Git.${NC}"
-    echo
-    echo "Comprueba que las carpetas contienen repositorios Git."
-    echo
-    echo "Por ejemplo:"
-    echo
-    echo "  Module-Interfaces-Launcher/"
-    echo "  ├── Beneficiary-Interface/"
-    echo "  │   └── .git"
-    echo "  ├── Collections-Interface/"
-    echo "  │   └── .git"
-    echo "  ├── Login-Hub-Interface/"
-    echo "  │   └── .git"
-    echo "  └── Sales-Interface/"
-    echo "      └── .git"
-    echo
-
     exit 1
+
 fi
+
+# ============================================================
+# SELECCIONAR OPERACIÓN
+# ============================================================
+
+echo
+print_line
+
+echo -e "${CYAN}¿Qué deseas hacer?${NC}"
+echo
+echo "  1) Bajar cambios"
+echo "  2) Subir cambios"
+echo "  3) Salir"
+echo
+
+read -rp "Opción [1-3]: " ACTION_OPTION
+
+case "$ACTION_OPTION" in
+
+    1)
+        ACTION="pull"
+        ;;
+
+    2)
+        ACTION="push"
+        ;;
+
+    3)
+        echo
+        echo "Operación cancelada."
+        exit 0
+        ;;
+
+    *)
+        echo -e "${RED}Opción inválida.${NC}"
+        exit 1
+        ;;
+
+esac
 
 # ============================================================
 # SELECCIONAR RAMA
@@ -123,6 +144,8 @@ esac
 # ============================================================
 
 echo
+print_line
+
 echo -e "${CYAN}Selecciona el remoto:${NC}"
 echo
 echo "  1) origin"
@@ -196,6 +219,31 @@ else
 fi
 
 # ============================================================
+# SI ES PUSH -> PEDIR MENSAJE DE COMMIT
+# ============================================================
+
+COMMIT_MESSAGE=""
+
+if [ "$ACTION" = "push" ]; then
+
+    echo
+    print_line
+
+    echo -e "${CYAN}Mensaje del commit:${NC}"
+    echo
+
+    read -rp "Mensaje: " COMMIT_MESSAGE
+
+    if [ -z "$COMMIT_MESSAGE" ]; then
+
+        echo -e "${RED}El mensaje del commit no puede estar vacío.${NC}"
+        exit 1
+
+    fi
+
+fi
+
+# ============================================================
 # RESUMEN
 # ============================================================
 
@@ -204,10 +252,21 @@ print_line
 
 echo -e "${CYAN}Configuración seleccionada:${NC}"
 echo
-echo "  Rama   : $BRANCH"
-echo "  Remoto : $REMOTE"
-echo
 
+if [ "$ACTION" = "pull" ]; then
+    echo "  Operación : BAJAR CAMBIOS"
+else
+    echo "  Operación : SUBIR CAMBIOS"
+fi
+
+echo "  Rama      : $BRANCH"
+echo "  Remoto    : $REMOTE"
+
+if [ "$ACTION" = "push" ]; then
+    echo "  Commit    : $COMMIT_MESSAGE"
+fi
+
+echo
 echo -e "${CYAN}Proyectos:${NC}"
 
 for PROJECT in "${SELECTED_PROJECTS[@]}"; do
@@ -237,7 +296,7 @@ FAILED=()
 SKIPPED=()
 
 # ============================================================
-# ACTUALIZAR PROYECTOS
+# PROCESAR PROYECTOS
 # ============================================================
 
 for PROJECT in "${SELECTED_PROJECTS[@]}"; do
@@ -261,7 +320,7 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
     }
 
     # ========================================================
-    # REMOTO
+    # VERIFICAR REMOTO
     # ========================================================
 
     if ! git remote get-url "$REMOTE" >/dev/null 2>&1; then
@@ -278,36 +337,15 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
     fi
 
     echo
-    echo -e "${CYAN}Remoto seleccionado:${NC}"
-
+    echo -e "${CYAN}Remoto:${NC}"
     git remote get-url "$REMOTE"
-
-    # ========================================================
-    # CAMBIOS LOCALES
-    # ========================================================
-
-    if [ -n "$(git status --porcelain)" ]; then
-
-        echo
-        echo -e "${YELLOW}⚠ El proyecto tiene cambios locales.${NC}"
-        echo
-
-        git status --short
-
-        echo
-        echo -e "${YELLOW}Se omitirá este proyecto para proteger tus cambios.${NC}"
-
-        SKIPPED+=("$PROJECT_NAME")
-
-        continue
-    fi
 
     # ========================================================
     # FETCH
     # ========================================================
 
     echo
-    echo -e "${CYAN}→ Descargando información desde $REMOTE...${NC}"
+    echo -e "${CYAN}→ Actualizando información de $REMOTE...${NC}"
 
     if ! git fetch "$REMOTE" --prune; then
 
@@ -316,6 +354,7 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
         FAILED+=("$PROJECT_NAME")
 
         continue
+
     fi
 
     echo -e "${GREEN}✓ Fetch completado.${NC}"
@@ -332,7 +371,6 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
         echo
 
         echo "Ramas disponibles:"
-
         git branch -r
 
         FAILED+=("$PROJECT_NAME")
@@ -341,7 +379,21 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
     fi
 
     # ========================================================
-    # RAMA LOCAL
+    # VERIFICAR CAMBIOS LOCALES
+    # ========================================================
+
+    if [ -n "$(git status --porcelain)" ]; then
+
+        echo
+        echo -e "${YELLOW}Cambios locales detectados:${NC}"
+        echo
+
+        git status --short
+
+    fi
+
+    # ========================================================
+    # ASEGURAR RAMA LOCAL
     # ========================================================
 
     if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
@@ -361,8 +413,7 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
     else
 
         echo
-        echo -e "${CYAN}→ La rama local '$BRANCH' no existe.${NC}"
-        echo -e "${CYAN}→ Creándola desde $REMOTE/$BRANCH...${NC}"
+        echo -e "${CYAN}→ Creando rama local $BRANCH...${NC}"
 
         if ! git switch --track -c "$BRANCH" "$REMOTE/$BRANCH"; then
 
@@ -379,43 +430,142 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
     # CONFIGURAR TRACKING
     # ========================================================
 
-    echo
-    echo -e "${CYAN}→ Configurando tracking...${NC}"
+    git branch --set-upstream-to="$REMOTE/$BRANCH" "$BRANCH" \
+        >/dev/null 2>&1 || true
 
-    if ! git branch --set-upstream-to="$REMOTE/$BRANCH" "$BRANCH" \
-        >/dev/null 2>&1; then
+    # ========================================================
+    # OPERACIÓN: PULL
+    # ========================================================
 
-        echo -e "${YELLOW}⚠ No se pudo configurar tracking automáticamente.${NC}"
+    if [ "$ACTION" = "pull" ]; then
 
-    else
+        echo
+        echo -e "${CYAN}→ Verificando cambios locales...${NC}"
 
-        echo -e "${GREEN}✓ $BRANCH -> $REMOTE/$BRANCH${NC}"
+        if [ -n "$(git status --porcelain)" ]; then
+
+            echo
+            echo -e "${YELLOW}⚠ El proyecto tiene cambios locales.${NC}"
+            echo
+            echo -e "${YELLOW}Se omitirá para proteger tus cambios.${NC}"
+
+            SKIPPED+=("$PROJECT_NAME")
+
+            continue
+        fi
+
+        echo
+        echo -e "${CYAN}→ Bajando cambios desde $REMOTE/$BRANCH...${NC}"
+
+        if git pull --ff-only "$REMOTE" "$BRANCH"; then
+
+            echo
+            echo -e "${GREEN}✓ $PROJECT_NAME actualizado correctamente.${NC}"
+
+            SUCCESS+=("$PROJECT_NAME")
+
+        else
+
+            echo
+            echo -e "${RED}✗ No se pudo actualizar $PROJECT_NAME.${NC}"
+
+            FAILED+=("$PROJECT_NAME")
+
+        fi
 
     fi
 
     # ========================================================
-    # PULL
+    # OPERACIÓN: PUSH
     # ========================================================
 
-    echo
-    echo -e "${CYAN}→ Actualizando proyecto...${NC}"
+    if [ "$ACTION" = "push" ]; then
 
-    if git pull --ff-only "$REMOTE" "$BRANCH"; then
+        # ----------------------------------------------------
+        # DETECTAR CAMBIOS
+        # ----------------------------------------------------
+
+        if [ -n "$(git status --porcelain)" ]; then
+
+            echo
+            echo -e "${CYAN}→ Agregando cambios...${NC}"
+
+            git add .
+
+            # ------------------------------------------------
+            # COMMIT
+            # ------------------------------------------------
+
+            echo
+            echo -e "${CYAN}→ Creando commit...${NC}"
+
+            if git commit -m "$COMMIT_MESSAGE"; then
+
+                echo -e "${GREEN}✓ Commit creado.${NC}"
+
+            else
+
+                echo -e "${RED}✗ No se pudo crear el commit.${NC}"
+
+                FAILED+=("$PROJECT_NAME")
+
+                continue
+            fi
+
+        else
+
+            echo
+            echo -e "${YELLOW}No existen archivos modificados.${NC}"
+
+        fi
+
+        # ----------------------------------------------------
+        # VERIFICAR COMMITS PENDIENTES
+        # ----------------------------------------------------
+
+        AHEAD_COUNT=$(git rev-list --count "$REMOTE/$BRANCH..$BRANCH")
+
+        if [ "$AHEAD_COUNT" -eq 0 ]; then
+
+            echo
+            echo -e "${YELLOW}No existen commits pendientes para subir.${NC}"
+
+            SKIPPED+=("$PROJECT_NAME")
+
+            continue
+        fi
 
         echo
-        echo -e "${GREEN}✓ $PROJECT_NAME actualizado correctamente.${NC}"
-
-        SUCCESS+=("$PROJECT_NAME")
-
-    else
+        echo -e "${CYAN}Commits pendientes: $AHEAD_COUNT${NC}"
 
         echo
-        echo -e "${RED}✗ No se pudo actualizar $PROJECT_NAME.${NC}"
-        echo
-        echo "El proyecto puede tener commits locales que todavía"
-        echo "no existen en $REMOTE/$BRANCH."
+        echo -e "${CYAN}→ Subiendo cambios a $REMOTE/$BRANCH...${NC}"
 
-        FAILED+=("$PROJECT_NAME")
+        # ----------------------------------------------------
+        # PUSH
+        # ----------------------------------------------------
+
+        if git push "$REMOTE" "$BRANCH"; then
+
+            echo
+            echo -e "${GREEN}✓ $PROJECT_NAME subido correctamente.${NC}"
+
+            SUCCESS+=("$PROJECT_NAME")
+
+        else
+
+            echo
+            echo -e "${RED}✗ No se pudo subir $PROJECT_NAME.${NC}"
+            echo
+            echo "Posibles causas:"
+            echo "  - No tienes permisos en el remoto."
+            echo "  - El remoto tiene commits que no tienes."
+            echo "  - La rama está protegida."
+            echo "  - Existe un conflicto con el remoto."
+
+            FAILED+=("$PROJECT_NAME")
+
+        fi
 
     fi
 
@@ -432,7 +582,8 @@ echo -e "${CYAN}                     RESUMEN FINAL${NC}"
 echo -e "${CYAN}============================================================${NC}"
 
 echo
-echo -e "${GREEN}✓ ACTUALIZADOS:${NC}"
+
+echo -e "${GREEN}✓ PROCESADOS CORRECTAMENTE:${NC}"
 
 if [ ${#SUCCESS[@]} -eq 0 ]; then
 
@@ -447,7 +598,8 @@ else
 fi
 
 echo
-echo -e "${YELLOW}⚠ OMITIDOS POR CAMBIOS LOCALES:${NC}"
+
+echo -e "${YELLOW}⚠ OMITIDOS:${NC}"
 
 if [ ${#SKIPPED[@]} -eq 0 ]; then
 
@@ -462,6 +614,7 @@ else
 fi
 
 echo
+
 echo -e "${RED}✗ CON ERRORES:${NC}"
 
 if [ ${#FAILED[@]} -eq 0 ]; then
