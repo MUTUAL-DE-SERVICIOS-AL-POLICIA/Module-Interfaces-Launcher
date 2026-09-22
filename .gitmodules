@@ -5,3 +5,9 @@
 [submodule "Login-Hub-Interface"]
 	path = Login-Hub-Interface
 	url = https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Login-Hub-Interface.git
+[submodule "Sales-Interface"]
+	path = Sales-Interface
+	url = https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Sales-Interface.git
+[submodule "Collections-Interface"]
+	path = Collections-Interface
+	url = https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Collections-Interface.git
