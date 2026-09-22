@@ -112,7 +112,7 @@ print_line
 echo -e "${CYAN}Selecciona la rama:${NC}"
 echo
 echo "  1) dev"
-echo "  2) test"
+echo "  2) testing"
 echo "  3) main"
 echo
 
@@ -125,7 +125,7 @@ case "$BRANCH_OPTION" in
         ;;
 
     2)
-        BRANCH="test"
+        BRANCH="testing"
         ;;
 
     3)
@@ -401,7 +401,7 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
         echo
         echo -e "${CYAN}→ Cambiando a rama $BRANCH...${NC}"
 
-        if ! git switch "$BRANCH"; then
+        if ! git checkout "$BRANCH"; then
 
             echo -e "${RED}✗ No se pudo cambiar a $BRANCH.${NC}"
 
@@ -415,7 +415,7 @@ for PROJECT in "${SELECTED_PROJECTS[@]}"; do
         echo
         echo -e "${CYAN}→ Creando rama local $BRANCH...${NC}"
 
-        if ! git switch --track -c "$BRANCH" "$REMOTE/$BRANCH"; then
+        if ! git checkout -b "$BRANCH" "$REMOTE/$BRANCH"; then
 
             echo -e "${RED}✗ No se pudo crear la rama $BRANCH.${NC}"
 
