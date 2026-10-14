@@ -1,25 +1,57 @@
 services:
 
   beneficiary-interface:
-    build: 
+    build:
       context: ./Beneficiary-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${NEXT_PUBLIC_SERVER_PORT_FRONTEND}:${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - ${BENEFICIARY_PORT}:${BENEFICIARY_PORT}
+    env_file:
+      - ./Beneficiary-Interface/.env
     environment:
       - NODE_ENV=production
-      - PORT=${NEXT_PUBLIC_SERVER_PORT_FRONTEND}
+      - PORT=${BENEFICIARY_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
 
   login-hub-interface:
-    build: 
+    build:
       context: ./Login-Hub-Interface
       dockerfile: dockerfile.prod
     ports:
-      - ${LOGIN_FRONTEND_PORT}:${LOGIN_FRONTEND_PORT}
+      - ${LOGIN_HUB_PORT}:${LOGIN_HUB_PORT}
+    env_file:
+      - ./Login-Hub-Interface/.env
     environment:
       - NODE_ENV=production
-      - PORT=${LOGIN_FRONTEND_PORT}
+      - PORT=${LOGIN_HUB_PORT}
+      - HOSTNAME=0.0.0.0
+    restart: always
+
+  sales-interface:
+    build:
+      context: ./Sales-Interface
+      dockerfile: dockerfile.prod
+    ports:
+      - ${SALES_PORT}:${SALES_PORT}
+    env_file:
+      - ./Sales-Interface/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=${SALES_PORT}
+      - HOSTNAME=0.0.0.0
+    restart: always
+
+  collections-interface:
+    build:
+      context: ./Collections-Interface
+      dockerfile: dockerfile.prod
+    ports:
+      - ${COLLECTIONS_PORT}:${COLLECTIONS_PORT}
+    env_file:
+      - ./Collections-Interface/.env
+    environment:
+      - NODE_ENV=production
+      - PORT=${COLLECTIONS_PORT}
       - HOSTNAME=0.0.0.0
     restart: always
